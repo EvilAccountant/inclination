@@ -1,0 +1,28 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/inclination
+      username: admin
+      password: admin
+
+server:
+  port: 8877
+
+oracleUrl: "jdbc:oracle:thin:@192.168.1.100:1521:orcl" #Oracle连接名
+oracleUsername: "dqzx"  #用户名
+oraclePassword: "dqzx"  #密码
+
+folderPath: "D:\\data" #文件夹路径
+bridgeId: "E875649989EA4AB39A3B10F110C98EC7" #桥梁ID
+
+#所有CAN设备的Id号以及位置数据，英文逗号分隔
+canIds: "0x0581,0x0582,0x0583,0x0584,0x0585,0x0586,0x0587,0x0588,0x0589" #canId
+canDistance: "0,8.95,17.9,26.85,35.8,44.75,53.7,62.65,71.6"  #测点距离
+canNumber: 9  #can数量
+
+fPass: 1 #通带截止频率
+fStop: 2 #阻带截止频率
+aPass: 1 #通带最大衰减
+aStop: 40 #阻带最小衰减
+fSample: 20 #采样频率
+
