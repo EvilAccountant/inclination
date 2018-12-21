@@ -1,6 +1,8 @@
 package com.ming.inclination.service;
 
 import com.ming.inclination.entity.TblDataOffsetToOrcl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,8 @@ import java.util.List;
 
 @Service
 public class DataService {
+
+    private final static Logger LOGGER = LogManager.getLogger(DataService.class);
 
     @Value("${oracleUrl}")
     private String oracleUrl;//oracle数据库地址
@@ -39,6 +43,7 @@ public class DataService {
                 preStat.setTimestamp(5, offset.getAcTime());
                 preStat.addBatch();
             }
+            LOGGER.debug(preStat.toString());
             preStat.executeBatch();
             connection.commit();
             System.out.println("存入ORACLE数据库" + offsetList.size());

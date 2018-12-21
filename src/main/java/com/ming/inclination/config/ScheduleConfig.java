@@ -5,7 +5,6 @@ import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
-
 import java.util.concurrent.Executors;
 
 @Configuration
@@ -19,24 +18,4 @@ public class ScheduleConfig implements SchedulingConfigurer, AsyncConfigurer {
         scheduledTaskRegistrar.setScheduler(Executors.newScheduledThreadPool(10));
     }
 
-//    @Bean("asyncTread")
-//    public TaskScheduler asyncTread() {
-//        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-//        scheduler.setThreadNamePrefix("asyncTread---");
-//        scheduler.setPoolSize(10);
-//        scheduler.initialize();
-//        return scheduler;
-//    }
-
-//    @Bean("asyncTread")
-//    public ThreadPoolTaskExecutor asyncTread() {
-//        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-//        executor.setCorePoolSize(10);
-//        executor.setMaxPoolSize(20);
-//        executor.setQueueCapacity(200);
-//        executor.setKeepAliveSeconds(60);
-//        executor.setThreadNamePrefix("asyncTreadPool---");
-//        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-//        return executor;
-//    }
 }

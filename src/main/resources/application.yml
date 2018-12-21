@@ -4,9 +4,13 @@ spring:
       uri: mongodb://localhost:27017/inclination
       username: admin
       password: admin
+  output:
+    ansi:
+      enabled: DETECT
 
 server:
   port: 8877
+
 
 oracleUrl: "jdbc:oracle:thin:@192.168.1.100:1521:orcl" #Oracle连接名
 oracleUsername: "dqzx"  #用户名
@@ -25,4 +29,9 @@ fStop: 2 #阻带截止频率
 aPass: 1 #通带最大衰减
 aStop: 40 #阻带最小衰减
 fSample: 20 #采样频率
+
+logging:
+  level:
+    com.ming.inclination.service: DEBUG
+
 

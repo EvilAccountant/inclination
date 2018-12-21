@@ -20,7 +20,6 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -40,9 +39,6 @@ public class OffsetService {
 
     @Autowired
     private DataService dataService;
-
-//    @Autowired
-//    private ThreadPoolTaskExecutor pool;
 
     private MongoTemplate mongoTemplate;
 
@@ -71,9 +67,9 @@ public class OffsetService {
      *
      * @return
      */
-    @Transactional
     @Scheduled(fixedDelay = 30 * 1000)
     public void getOriData() {
+        LOGGER.warn("getOriData Activated");
         File folder = new File(folderPath);
         File file = null;
         RandomAccessFile raf;
@@ -96,9 +92,6 @@ public class OffsetService {
             }
 
             if (file != null) {
-                raf = new RandomAccessFile(file, "rw");
-                channel = raf.getChannel();
-                fileLock = channel.tryLock();
 
                 Iterable<CSVRecord> records;
                 try (Reader in = new InputStreamReader(new FileInputStream(file), "GBK")) {
@@ -107,6 +100,10 @@ public class OffsetService {
                             .parse(in)
                             .getRecords();
                 }
+
+                raf = new RandomAccessFile(file, "rw");
+                channel = raf.getChannel();
+                fileLock = channel.tryLock();
 
                 if (records != null && ((List<CSVRecord>) records).size() > 0) {
                     analysisRecord(records);//获取数据
@@ -156,7 +153,7 @@ public class OffsetService {
             date.append(MyUtils.getToday());
         }
         buildSecMap(timeMap);//组装数据
-        LOGGER.info("从CSV文件收集原始数据共 " + index + " 条");
+        LOGGER.warn("从CSV文件收集原始数据共 " + index + " 条");
     }
 
     /**
@@ -218,11 +215,10 @@ public class OffsetService {
         mongoTemplate.insert(originOffsetList, TblOriginOffset.class);
     }
 
-    @Async("threadPoolTaskExecutor")
-    @Transactional
+    @Async("taskExecutor")
     @Scheduled(fixedRate = 60 * 1000)
     public void doFilter() {
-//        LOGGER.info("----------------thread pool count: {}", pool.getThreadPoolExecutor().getQueue().size());
+        LOGGER.warn("doFilter Activated");
         long currentTime = System.currentTimeMillis();
         Date headTime = new Date(currentTime - 2 * 60 * 1000 - 1);//2min
         Date endTime = new Date(currentTime + 1);
@@ -234,12 +230,12 @@ public class OffsetService {
 
         if (originOffsetList.size() > 0) {
             try {
-                LOGGER.info("获取时间范围内的原始数据：" + originOffsetList.size() + " 条");
+                LOGGER.warn("获取时间范围内的原始数据：" + originOffsetList.size() + " 条");
                 List<TblFilteredOffset> filteredList = new ArrayList<>();
                 String[] canIdArr = canIds.split(",");
                 filterService.throughFilter(originOffsetList, filteredList, canNumber, canIdArr);
                 mongoTemplate.insert(filteredList, TblFilteredOffset.class);
-                LOGGER.info("完成滤波数据共 " + filteredList.size() + " 条");
+                LOGGER.warn("完成滤波数据共 " + filteredList.size() + " 条");
 
                 filteredList = mongoTemplate.find(new Query(Criteria.where("dataTime").gte(headTime2).lte(endTime2)), TblFilteredOffset.class);
                 List<TblFilteredOffset> filterTempList = new ArrayList<>(canNumber);
@@ -257,7 +253,7 @@ public class OffsetService {
                         filterTempList.clear();
                     }
                 }
-                LOGGER.info("挠度换算数据完成共 " + filteredList.size() + " 条");
+                LOGGER.warn("挠度换算数据完成共 " + filteredList.size() + " 条");
             } catch (Exception e) {
                 LOGGER.error(e);
             }
@@ -267,10 +263,10 @@ public class OffsetService {
     /**
      * 以秒为单位取出位移值并计算最大值、最小值、平均值
      */
-    @Transactional
-    @Scheduled(fixedRate = 1 * 60 * 1000)
+    @Scheduled(fixedRate = 60 * 1000)
     public void getOffsetResult() {
-        mongoTemplate.remove(new Query().addCriteria(Criteria.where("uploaded").is("1")), TblDataOffset.class);
+        LOGGER.warn("getOffsetResult Activated");
+
         Query query = new Query();
         query.addCriteria(Criteria.where("uploaded").is("0"));
         Update update = Update.update("uploaded", "1");
@@ -285,7 +281,7 @@ public class OffsetService {
                 Aggregation.sort(Sort.Direction.ASC, "minZone"));
         AggregationResults<DataOffsetVo> output = mongoTemplate.aggregate(aggregation, "tblDataOffset", DataOffsetVo.class);
         if (output.getMappedResults().size() > 0) {
-            LOGGER.info("聚合查询结果：" + output.getMappedResults().size() + " 条");
+            LOGGER.warn("聚合查询结果：" + output.getMappedResults().size() + " 条");
             mongoTemplate.updateMulti(query, update, TblDataOffset.class);
             List<DataOffsetVo> voList = new ArrayList<>();
             for (Iterator<DataOffsetVo> iterator = output.getMappedResults().iterator(); iterator.hasNext(); ) {
@@ -304,14 +300,21 @@ public class OffsetService {
     public void deleteOriData() {
         Date beforeDay = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);
         mongoTemplate.remove(new Query(Criteria.where("dataTime").lte(beforeDay)), TblOriginOffset.class);
-        LOGGER.info("已删除" + sdf.format(beforeDay) + "之前的原始数据");
+        LOGGER.warn("已删除" + sdf.format(beforeDay) + "之前的原始数据");
     }
 
     @Scheduled(cron = "0 0 12 * * ?")
     public void deleteFilterData() {
         Date beforeDay = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);
         mongoTemplate.remove(new Query(Criteria.where("dataTime").lte(beforeDay)), TblFilteredOffset.class);
-        LOGGER.info("已删除" + sdf.format(beforeDay) + "之前的过滤数据");
+        LOGGER.warn("已删除" + sdf.format(beforeDay) + "之前的过滤数据");
+    }
+
+    @Scheduled(cron = "0 0 12 * * ?")
+    public void deleteOffsetData() {
+        Date beforeDay = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);
+        mongoTemplate.remove(new Query().addCriteria(Criteria.where("uploaded").is("1").and("dataTime").lte(beforeDay)), TblDataOffset.class);
+        LOGGER.warn("已删除" + sdf.format(beforeDay) + "之前的位移数据");
     }
 
     /**

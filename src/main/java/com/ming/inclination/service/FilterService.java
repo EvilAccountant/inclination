@@ -6,6 +6,8 @@ import com.mathworks.toolbox.javabuilder.MWException;
 import com.mathworks.toolbox.javabuilder.MWNumericArray;
 import com.ming.inclination.entity.TblFilteredOffset;
 import com.ming.inclination.entity.TblOriginOffset;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,8 @@ public class FilterService {
     private double aStop;//阻带最小衰减
     @Value("${fSample}")
     private double fSample;//采样频率
+
+    private static final Logger LOGGER = LogManager.getLogger(FilterService.class);
 
     /**
      * 将数据滤波并保存
