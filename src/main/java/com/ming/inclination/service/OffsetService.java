@@ -96,6 +96,10 @@ public class OffsetService {
             }
 
             if (file != null) {
+                raf = new RandomAccessFile(file, "rw");
+                channel = raf.getChannel();
+                fileLock = channel.tryLock();
+
                 Iterable<CSVRecord> records;
                 try (Reader in = new InputStreamReader(new FileInputStream(file), "GBK")) {
                     records = CSVFormat.EXCEL
@@ -103,10 +107,6 @@ public class OffsetService {
                             .parse(in)
                             .getRecords();
                 }
-
-                raf = new RandomAccessFile(file, "rw");
-                channel = raf.getChannel();
-                fileLock = channel.tryLock();
 
                 if (records != null && ((List<CSVRecord>) records).size() > 0) {
                     analysisRecord(records);//获取数据
