@@ -46,7 +46,7 @@ public class DataService {
             LOGGER.debug(preStat.toString());
             preStat.executeBatch();
             connection.commit();
-            System.out.println("存入ORACLE数据库" + offsetList.size());
+            LOGGER.debug("存入ORACLE数据库: " + offsetList.size());
         }
 
     }

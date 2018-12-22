@@ -63,4 +63,9 @@ public final class TblFilteredOffset {
     public void setValueY(double valueY) {
         this.valueY = valueY;
     }
+
+    @Override
+    public String toString() {
+        return canId+" "+dataTime+" "+oriValueX+" "+valueX+" "+oriValueY+" "+valueY+"\n";
+    }
 }

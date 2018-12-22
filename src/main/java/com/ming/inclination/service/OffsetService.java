@@ -35,10 +35,10 @@ import java.util.*;
 public class OffsetService {
 
     @Autowired
-    private FilterService filterService;
+    private DataService dataService;
 
     @Autowired
-    private DataService dataService;
+    private FilterService filterService;
 
     private MongoTemplate mongoTemplate;
 
@@ -48,7 +48,8 @@ public class OffsetService {
     }
 
     @Value("${bridgeId}")
-    private String bridgeId;//桥梁id
+    /**桥梁id**/
+    private String bridgeId;
     @Value("${canIds}")
     private String canIds;//倾角仪ID字符串
     @Value("${canDistance}")
@@ -106,7 +107,8 @@ public class OffsetService {
                 fileLock = channel.tryLock();
 
                 if (records != null && ((List<CSVRecord>) records).size() > 0) {
-                    analysisRecord(records);//获取数据
+                    //获取数据
+                    analysisRecord(records);
                 }
 
                 clearFile(file);
@@ -125,7 +127,8 @@ public class OffsetService {
      */
     public void analysisRecord(Iterable<CSVRecord> records) throws ParseException {
         StringBuilder date = new StringBuilder(47);
-        date.append(MyUtils.getToday());//当日年月日
+        //当日年月日
+        date.append(MyUtils.getToday());
 
         LinkedHashMap<String, ArrayList<String>> timeMap = new LinkedHashMap<>();
         String time, canId, data;
@@ -141,7 +144,7 @@ public class OffsetService {
             time = record.get("系统时间").substring(2, 14);
             data = record.get("数据").substring(3, 26).replace(" ", "");
 
-            if ("0x0590".equals(canId)) continue;
+            if ("0x0590".equals(canId)) {continue;}
 
             String actualTime = (date.toString() + time).substring(0, 18);
             if (!timeMap.containsKey(actualTime)) {
@@ -152,7 +155,8 @@ public class OffsetService {
             date.delete(0, date.length());
             date.append(MyUtils.getToday());
         }
-        buildSecMap(timeMap);//组装数据
+        //组装数据
+        buildSecMap(timeMap);
         LOGGER.warn("从CSV文件收集原始数据共 " + index + " 条");
     }
 
@@ -220,27 +224,32 @@ public class OffsetService {
     public void doFilter() {
         LOGGER.warn("doFilter Activated");
         long currentTime = System.currentTimeMillis();
-        Date headTime = new Date(currentTime - 2 * 60 * 1000 - 1);//2min
+        Date headTime = new Date(currentTime - 2 * 60 * 1000 - 1);
         Date endTime = new Date(currentTime + 1);
-        Date headTime2 = new Date(currentTime - 90 * 1000 - 1);//30s
-        Date endTime2 = new Date(currentTime - 30 * 1000 + 1);//1min30s
+        Date headTime2 = new Date(currentTime - 90 * 1000 - 1);
+        Date endTime2 = new Date(currentTime - 30 * 1000 + 1);
+//        long currentTime = System.currentTimeMillis();
+//        Date headTime = new Date(0);
+//        Date endTime = new Date(currentTime);
+//        Date headTime2 = new Date(0);
+//        Date endTime2 = new Date(currentTime);
 
         List<TblMeasurePointOffset> measurePointList = getMeasurePoints();
         List<TblOriginOffset> originOffsetList = mongoTemplate.find(new Query(Criteria.where("dataTime").gte(headTime).lte(endTime)), TblOriginOffset.class);
 
         if (originOffsetList.size() > 0) {
             try {
-                LOGGER.warn("获取时间范围内的原始数据：" + originOffsetList.size() + " 条");
+                LOGGER.warn("待过滤数据：" + originOffsetList.size() + " 条");
                 List<TblFilteredOffset> filteredList = new ArrayList<>();
                 String[] canIdArr = canIds.split(",");
                 filterService.throughFilter(originOffsetList, filteredList, canNumber, canIdArr);
+                LOGGER.warn("完成过滤数据共 " + filteredList.size() + " 条");
                 mongoTemplate.insert(filteredList, TblFilteredOffset.class);
-                LOGGER.warn("完成滤波数据共 " + filteredList.size() + " 条");
 
+                System.out.println("开始挠度换算");
                 filteredList = mongoTemplate.find(new Query(Criteria.where("dataTime").gte(headTime2).lte(endTime2)), TblFilteredOffset.class);
                 List<TblFilteredOffset> filterTempList = new ArrayList<>(canNumber);
                 HashMap<String, Double> canIdRadianMap = new HashMap<>(canNumber);
-
                 for (int i = 0; i < filteredList.size(); i++) {
                     filterTempList.add(filteredList.get(i));
                     if (filterTempList.size() == canNumber) {
@@ -372,7 +381,7 @@ public class OffsetService {
      */
     private List<TblOriginOffset> toOriOffset(List<String> dataList) throws ParseException {
 
-        if (dataList.isEmpty()) return null;
+        if (dataList.isEmpty()) {return null;}
 
         List<TblOriginOffset> originOffsetList = new ArrayList<>(dataList.size());
         for (int i = 0; i < dataList.size(); i++) {
@@ -410,9 +419,9 @@ public class OffsetService {
                 orcVo.setId(MyUtils.generateUUID());
                 orcVo.setBridgeId(bridgeId);
                 orcVo.setMeasurePoint(dataOffsetVo.getMeasurePoint());
-                if (j == 0) orcVo.setOffset(Double.valueOf(dataOffsetVo.getMinOffset()));
-                if (j == 1) orcVo.setOffset(Double.valueOf(dataOffsetVo.getMaxOffset()));
-                if (j == 2) orcVo.setOffset(Double.valueOf(dataOffsetVo.getAvgOffset()));
+                if (j == 0) {orcVo.setOffset(Double.valueOf(dataOffsetVo.getMinOffset()));}
+                if (j == 1) {orcVo.setOffset(Double.valueOf(dataOffsetVo.getMaxOffset()));}
+                if (j == 2) {orcVo.setOffset(Double.valueOf(dataOffsetVo.getAvgOffset()));}
                 orcVo.setAcTime(new Timestamp(sdfm.parse(dataOffsetVo.getMinZone()).getTime()));
                 dataOffsetList.add(orcVo);
             }
